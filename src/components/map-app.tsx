@@ -123,6 +123,12 @@ export function MapApp() {
         </div>
         <LayerToggle counts={layerCounts} active={active} onToggle={toggleLayer} />
 
+        {active.size === 0 && (
+          <p className="mt-2 border-t border-border pt-2 text-[10px] text-muted-foreground">
+            {t("emptyHint")}
+          </p>
+        )}
+
         <div className="mt-2 border-t border-border pt-2">
           <button
             type="button"
@@ -147,9 +153,8 @@ export function MapApp() {
         )}
       </div>
 
-      {/* Legend */}
       {choroplethOn && (
-        <div className="absolute bottom-3 left-3 z-20 rounded-xl border border-border bg-card/90 px-3 py-2 shadow-lg backdrop-blur">
+        <div className="absolute bottom-3 left-3 z-20 hidden rounded-xl border border-border bg-card/90 px-3 py-2 shadow-lg backdrop-blur sm:block">
           <p className="mb-1 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
             {t("legend.title")}
           </p>

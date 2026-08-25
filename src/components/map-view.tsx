@@ -141,9 +141,9 @@ export function MapView({
       id: "zones-fill",
       type: "fill",
       paint: {
-        "fill-color": fillColorExpression(),
-        "fill-opacity": choroplethOn ? 0.55 : 0.04,
-        "fill-outline-color": "transparent",
+        "fill-color": choroplethOn ? fillColorExpression() : "#c7c9d1",
+        "fill-opacity": choroplethOn ? 0.55 : 0.22,
+        "fill-outline-color": choroplethOn ? "transparent" : "rgba(10,10,10,0.18)",
       },
     }),
     [choroplethOn]
@@ -184,7 +184,7 @@ export function MapView({
           </Source>
         )}
 
-        {(Object.keys(active) as LayerKey[]).map((key) => {
+        {(Array.from(active) as LayerKey[]).map((key) => {
           if (!active.has(key)) return null;
           const data = layerData[key];
           if (!data) return null;
