@@ -36,6 +36,7 @@
   "Scoring": {
     "title": "Puntaje de la zona",
     "noZone": "Hacé clic en una zona del mapa para ver su desglose.",
+    "mapEmpty": "Todas las capas están apagadas — activá una para ver puntos en el mapa.",
     "total": "Puntaje total",
     "weight": "Peso",
     "raw": "Valor bruto",

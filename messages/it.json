@@ -36,6 +36,7 @@
   "Scoring": {
     "title": "Punteggio zona",
     "noZone": "Clicca una zona sulla mappa per vedere il dettaglio.",
+    "mapEmpty": "Tutti i layer sono disattivati — attivane uno per vedere i punti sulla mappa.",
     "total": "Punteggio totale",
     "weight": "Peso",
     "raw": "Valore grezzo",

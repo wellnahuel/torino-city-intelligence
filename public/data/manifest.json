@@ -1,0 +1,12 @@
+{
+  "zones": 94,
+  "layers": {
+    "cafes": 1863,
+    "restaurants": 1324,
+    "transit": 4304,
+    "schools": 518,
+    "services": 828,
+    "green": 2375
+  },
+  "generatedAt": "2026-08-25T23:44:14.553Z"
+}

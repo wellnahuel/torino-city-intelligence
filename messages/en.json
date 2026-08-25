@@ -36,6 +36,7 @@
   "Scoring": {
     "title": "Zone score",
     "noZone": "Click a zone on the map to see its breakdown.",
+    "mapEmpty": "All layers are off — enable a layer to see points on the map.",
     "total": "Total score",
     "weight": "Weight",
     "raw": "Raw value",
