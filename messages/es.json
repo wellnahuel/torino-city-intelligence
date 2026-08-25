@@ -1,0 +1,87 @@
+{
+  "Metadata": {
+    "title": "Torino City Intelligence",
+    "description": "Mapa interactivo de Turín con capas de POI y un puntaje por zona de 0 a 100 que responde \"dónde abrir un café\"."
+  },
+  "Header": {
+    "title": "Torino City Intelligence",
+    "subtitle": "Dónde abrir un café"
+  },
+  "Map": {
+    "loading": "Cargando mapa…",
+    "basemapError": "No se pudo cargar el mapa base. Las capas de datos pueden seguir disponibles.",
+    "retry": "Reintentar",
+    "layersTitle": "Capas",
+    "layerCount": "{count}",
+    "choroplethLabel": "Vista de puntaje",
+    "choroplethOn": "Puntaje",
+    "choroplethOff": "Neutro",
+    "layer": {
+      "cafes": "Cafés",
+      "restaurants": "Restaurantes",
+      "transit": "Paradas de transporte",
+      "schools": "Escuelas",
+      "services": "Hospitales y supermercados",
+      "green": "Áreas verdes"
+    },
+    "legend": {
+      "title": "Potencial de café",
+      "low": "Bajo",
+      "high": "Alto"
+    },
+    "noZone": "Sin zona seleccionada",
+    "allLayersOff": "Todas las capas apagadas",
+    "emptyHint": "Activá una capa para ver puntos en el mapa."
+  },
+  "Scoring": {
+    "title": "Puntaje de la zona",
+    "noZone": "Hacé clic en una zona del mapa para ver su desglose.",
+    "total": "Puntaje total",
+    "weight": "Peso",
+    "raw": "Valor bruto",
+    "contribution": "Aporte",
+    "variablesTitle": "Cómo funciona el puntaje",
+    "intro": "Cada una de las 94 zonas estadísticas de Turín recibe un puntaje de 0 a 100 a partir de cinco variables ponderadas. Una menor densidad de cafés puntúa mejor; el resto puntúa mejor cuanto más alto sea su valor.",
+    "variable": {
+      "cafe": {
+        "name": "Competencia de cafés",
+        "desc": "Inversa de la densidad de cafés en la zona. Menos competidores → más puntaje.",
+        "weight": "30%"
+      },
+      "traffic": {
+        "name": "Tráfico potencial",
+        "desc": "Densidad de POI y mezcla de usos de suelo como proxy de tránsito peatonal.",
+        "weight": "25%"
+      },
+      "transit": {
+        "name": "Acceso a transporte",
+        "desc": "Paradas de transporte a menos de 500 m del centroide de la zona.",
+        "weight": "20%"
+      },
+      "population": {
+        "name": "Población",
+        "desc": "Residentes en la zona (aperTO 2023).",
+        "weight": "15%"
+      },
+      "flow": {
+        "name": "Flujo diurno",
+        "desc": "Escuelas y comercios como proxy de visitantes diurnos.",
+        "weight": "10%"
+      }
+    }
+  },
+  "Footer": {
+    "osm": "Datos del mapa © colaboradores de OpenStreetMap (ODbL 1.0)",
+    "aperto": "Zonas y población © aperTO — Città di Torino (CC BY 4.0)",
+    "derived": "Datos derivados: capas de POI y puntajes por zona calculados a partir de las fuentes anteriores."
+  },
+  "Common": {
+    "language": "Idioma",
+    "theme": "Cambiar tema"
+  },
+  "NotFound": {
+    "title": "Página no encontrada",
+    "description": "La página que buscás no existe o fue movida.",
+    "backHome": "Volver al inicio"
+  }
+}

@@ -1,0 +1,87 @@
+{
+  "Metadata": {
+    "title": "Torino City Intelligence",
+    "description": "Interactive map of Turin with POI layers and a 0-100 per-zone score answering \"where to open a café\"."
+  },
+  "Header": {
+    "title": "Torino City Intelligence",
+    "subtitle": "Where to open a café"
+  },
+  "Map": {
+    "loading": "Loading map…",
+    "basemapError": "Could not load the basemap. Data layers may still be available.",
+    "retry": "Retry",
+    "layersTitle": "Layers",
+    "layerCount": "{count}",
+    "choroplethLabel": "Score view",
+    "choroplethOn": "Score",
+    "choroplethOff": "Neutral",
+    "layer": {
+      "cafes": "Cafés",
+      "restaurants": "Restaurants",
+      "transit": "Transit stops",
+      "schools": "Schools",
+      "services": "Hospitals & supermarkets",
+      "green": "Green areas"
+    },
+    "legend": {
+      "title": "Café potential",
+      "low": "Low",
+      "high": "High"
+    },
+    "noZone": "Select a zone",
+    "allLayersOff": "All layers off",
+    "emptyHint": "Enable a layer to see points on the map."
+  },
+  "Scoring": {
+    "title": "Zone score",
+    "noZone": "Click a zone on the map to see its breakdown.",
+    "total": "Total score",
+    "weight": "Weight",
+    "raw": "Raw value",
+    "contribution": "Contribution",
+    "variablesTitle": "How the score works",
+    "intro": "Each of Turin's 94 statistical zones gets a 0-100 score from five weighted variables. Lower café density scores better; the rest score better the higher their value.",
+    "variable": {
+      "cafe": {
+        "name": "Café competition",
+        "desc": "Inverse of café density in the zone. Fewer competitors → higher score.",
+        "weight": "30%"
+      },
+      "traffic": {
+        "name": "Potential traffic",
+        "desc": "POI density and land-use mix as a proxy for foot traffic.",
+        "weight": "25%"
+      },
+      "transit": {
+        "name": "Transit access",
+        "desc": "Transit stops within 500 m of the zone centroid.",
+        "weight": "20%"
+      },
+      "population": {
+        "name": "Population",
+        "desc": "Residents in the zone (aperTO 2023).",
+        "weight": "15%"
+      },
+      "flow": {
+        "name": "Daytime flow",
+        "desc": "Schools and shops as a proxy for daytime visitors.",
+        "weight": "10%"
+      }
+    }
+  },
+  "Footer": {
+    "osm": "Map data © OpenStreetMap contributors (ODbL 1.0)",
+    "aperto": "Zones & population © aperTO — Città di Torino (CC BY 4.0)",
+    "derived": "Derived data: POI layers and zone scores computed from the sources above."
+  },
+  "Common": {
+    "language": "Language",
+    "theme": "Toggle theme"
+  },
+  "NotFound": {
+    "title": "Page not found",
+    "description": "The page you're looking for doesn't exist or has been moved.",
+    "backHome": "Back home"
+  }
+}
