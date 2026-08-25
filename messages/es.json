@@ -43,6 +43,8 @@
     "contribution": "Aporte",
     "variablesTitle": "Cómo funciona el puntaje",
     "intro": "Cada una de las 94 zonas estadísticas de Turín recibe un puntaje de 0 a 100 a partir de cinco variables ponderadas. Una menor densidad de cafés puntúa mejor; el resto puntúa mejor cuanto más alto sea su valor.",
+    "inverseMark": "(menos = mejor)",
+    "totalNote": "Total = suma de los aportes, escala de 0 a 100.",
     "variable": {
       "cafe": {
         "name": "Competencia de cafés",

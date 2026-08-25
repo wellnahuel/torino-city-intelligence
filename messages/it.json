@@ -43,6 +43,8 @@
     "contribution": "Contributo",
     "variablesTitle": "Come funziona il punteggio",
     "intro": "Ognuna delle 94 zone statistiche di Torino riceve un punteggio da 0 a 100 basato su cinque variabili ponderate. Una minore densità di caffè ottiene un punteggio migliore; per le altre vale il contrario.",
+    "inverseMark": "(meno = meglio)",
+    "totalNote": "Totale = somma dei contributi, scala 0-100.",
     "variable": {
       "cafe": {
         "name": "Concorrenza caffè",

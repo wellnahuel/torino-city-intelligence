@@ -43,6 +43,8 @@
     "contribution": "Contribution",
     "variablesTitle": "How the score works",
     "intro": "Each of Turin's 94 statistical zones gets a 0-100 score from five weighted variables. Lower café density scores better; the rest score better the higher their value.",
+    "inverseMark": "(fewer = better)",
+    "totalNote": "Total = sum of contributions, 0-100 scale.",
     "variable": {
       "cafe": {
         "name": "Café competition",
