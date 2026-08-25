@@ -74,8 +74,11 @@ export function ScorePanel({ zone, allLayersOff }: ScorePanelProps) {
         <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
           {t("title")}
         </p>
+        <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
+          {t("intro")}
+        </p>
         {zone ? (
-          <div className="mt-1 flex items-baseline justify-between gap-2">
+          <div className="mt-2 flex items-baseline justify-between gap-2">
             <h3 className="text-sm font-semibold leading-snug">
               {zone.properties.name || zone.properties.ZONASTAT}
             </h3>
@@ -84,7 +87,7 @@ export function ScorePanel({ zone, allLayersOff }: ScorePanelProps) {
             </span>
           </div>
         ) : (
-          <p className="mt-1 text-sm text-muted-foreground">{t("noZone")}</p>
+          <p className="mt-2 text-sm text-muted-foreground">{t("noZone")}</p>
         )}
       </div>
 
@@ -114,13 +117,18 @@ export function ScorePanel({ zone, allLayersOff }: ScorePanelProps) {
                     <td className="py-1.5 pr-2">
                       <p className="font-medium text-foreground">
                         {t(`variable.${r.key}.name`)}
+                        {r.inverse && (
+                          <span className="ml-1 text-[10px] text-muted-foreground">
+                            {t("inverseMark")}
+                          </span>
+                        )}
                       </p>
                       <p className="text-[10px] leading-tight text-muted-foreground">
-                        {t(`variable.${r.key}.weight`)}
+                        {t(`variable.${r.key}.desc`)}
                       </p>
                     </td>
                     <td className="py-1.5 pr-2 text-right font-mono tabular-nums text-muted-foreground">
-                      {r.inverse ? "×" : ""}
+                      {Math.round(r.weight * 100)}%
                     </td>
                     <td className="py-1.5 pr-2 text-right font-mono tabular-nums">
                       {r.raw}
@@ -133,6 +141,9 @@ export function ScorePanel({ zone, allLayersOff }: ScorePanelProps) {
               })}
             </tbody>
           </table>
+          <p className="font-mono text-[10px] text-muted-foreground">
+            {t("totalNote")}
+          </p>
         </>
       ) : (
         <p className="text-xs text-muted-foreground">
