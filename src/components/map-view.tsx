@@ -38,12 +38,17 @@ const FALLBACK_STYLE_DARK: StyleSpecification = {
   layers: [{ id: "bg", type: "background", paint: { "background-color": "#0a0a0a" } }],
 };
 
-/** Score buckets: pale blue (low) → accent blue (high). */
+/**
+ * Score buckets: pale blue (low) → accent blue (high).
+ * Remapped to the REAL score range (30.4–57.1) so every tone is used;
+ * previously the 0–100 theoretical scale left the 60–100 buckets empty.
+ */
 const SCORE_BUCKETS: { max: number; color: string }[] = [
-  { max: 20, color: "#dce5ff" },
-  { max: 40, color: "#b9c7ff" },
-  { max: 60, color: "#8ea4ff" },
-  { max: 80, color: "#4d6bff" },
+  { max: 35, color: "#dce5ff" },
+  { max: 40, color: "#b0bcff" },
+  { max: 45, color: "#8494ff" },
+  { max: 50, color: "#586bff" },
+  { max: 55, color: "#2c43ff" },
   { max: 100, color: "#001aff" },
 ];
 

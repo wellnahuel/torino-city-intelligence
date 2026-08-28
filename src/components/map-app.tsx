@@ -45,7 +45,7 @@ export function MapApp() {
   /** Mobile overlay drawer — closed by default on fresh load. */
   const [drawerOpen, setDrawerOpen] = useState(false);
   /** lg+ persistent sidebar — visible unless the user collapses it. */
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
   const [basemapError, setBasemapError] = useState(false);
   const [dataError, setDataError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
