@@ -46,6 +46,12 @@ const FALLBACK_STYLE_DARK: StyleSpecification = {
  */
 const FILL = ["#dce5ff", "#b0bcff", "#8494ff", "#586bff", "#2c43ff", "#001aff"];
 
+/**
+ * Distinct hues for the compare slots 1..3 — none equal to the selected
+ * accent (#001aff) or the choropleth blues.
+ */
+const COMPARE_COLORS = ["#00c853", "#ff6d00", "#d500f9"];
+
 interface MapViewProps {
   displayScores: FeatureCollection<Polygon | MultiPolygon> | null;
   layerData: Partial<Record<LayerKey, FeatureCollection>>;
@@ -53,6 +59,8 @@ interface MapViewProps {
   choroplethOn: boolean;
   /** Selection contract — highlight and fly are derived from this prop. */
   selected: MapSelection;
+  /** Session comparison set — each zone gets a `compare1..3` feature-state slot. */
+  compare: Zone[];
   onZoneSelect: (zone: Zone | null) => void;
   onBasemapError: (failed: boolean) => void;
 }
@@ -63,6 +71,7 @@ export function MapView({
   active,
   choroplethOn,
   selected,
+  compare,
   onZoneSelect,
   onBasemapError,
 }: MapViewProps) {
@@ -74,6 +83,8 @@ export function MapView({
   const loadedRef = useRef(false);
   /** Currently highlighted feature id — written ONLY by the prop-driven effect below. */
   const selectedIdRef = useRef<number | null>(null);
+  /** Compare feature-states set by the effect below — re-removed key-scoped on re-run. */
+  const compareStatesRef = useRef<{ id: number; key: string }[]>([]);
   const [basemapError, setBasemapError] = useState(false);
   const [mapKey, setMapKey] = useState(0);
   const [mapReady, setMapReady] = useState(false);
@@ -92,7 +103,13 @@ export function MapView({
     if (!map) return;
     try {
       if (selectedIdRef.current !== null) {
-        map.removeFeatureState({ source: "zones", id: selectedIdRef.current });
+        // KEY-SCOPED removal — a bare removeFeatureState({source, id}) would wipe
+        // the compare1..3 states on the same feature (regression fix). MapLibre v6
+        // takes the key as a SECOND argument (not part of FeatureIdentifier).
+        map.removeFeatureState(
+          { source: "zones", id: selectedIdRef.current },
+          "selected"
+        );
         selectedIdRef.current = null;
       }
       const { zone } = selected;
@@ -133,6 +150,33 @@ export function MapView({
       // Map/source not ready (e.g. basemap error) — highlight + fly are best-effort.
     }
   }, [selected, displayScores, mapKey, mapReady]);
+
+  // Compare multi-highlight: set `compare1..3` feature-state slots (one boolean
+  // key per zone) with distinct colors. `mapKey`/`mapReady` re-run the effect
+  // after a basemap retry remounts the <Map> or the initial load completes.
+  useEffect(() => {
+    const map = mapRef.current?.getMap();
+    if (!map) return;
+    try {
+      // Key-scoped removal of the previous run's states — never bare
+      // removeFeatureState (would wipe `selected` and other compare keys).
+      for (const { id, key } of compareStatesRef.current) {
+        map.removeFeatureState({ source: "zones", id }, key);
+      }
+      compareStatesRef.current = [];
+      if (!displayScores) return;
+      compare.forEach((zone, i) => {
+        if (i >= 3) return; // cap — the UI enforces 3, defensive here
+        const id = zoneFeatureId(zone, displayScores);
+        if (id < 0) return;
+        const key = `compare${i + 1}`;
+        map.setFeatureState({ source: "zones", id }, { [key]: true });
+        compareStatesRef.current.push({ id, key });
+      });
+    } catch {
+      // Map/source not ready — best-effort, re-applied on mapKey/mapReady.
+    }
+  }, [compare, displayScores, mapKey, mapReady]);
 
   const handleClick = useCallback(
     (e: MapLayerMouseEvent) => {
@@ -193,23 +237,40 @@ const fillExpr = useMemo<ExpressionSpecification | null>(() => {
 }, [displayScores, choroplethOn]);
 
 const zonesFill: LayerProps = useMemo(
-  () => ({
-    id: "zones-fill",
-    type: "fill",
-    paint: {
-      "fill-color": choroplethOn ? fillExpr ?? "#c7c9d1" : "#c7c9d1",
-      // Selected zone gains emphasis (higher opacity) on top of the base value.
-      "fill-opacity": [
-        "case",
-        ["boolean", ["feature-state", "selected"], false],
-        choroplethOn ? 0.75 : 0.5,
-        choroplethOn ? 0.55 : 0.22,
-      ],
-      "fill-outline-color": choroplethOn ? "transparent" : "rgba(10,10,10,0.18)",
-    },
-  }),
-  [choroplethOn, fillExpr]
-);
+    () => ({
+      id: "zones-fill",
+      type: "fill",
+      paint: {
+        // Selected wins precedence; compare1..3 follow; base falls through.
+        "fill-color": [
+          "case",
+          ["boolean", ["feature-state", "selected"], false],
+          choroplethOn ? fillExpr ?? "#c7c9d1" : "#c7c9d1",
+          ["boolean", ["feature-state", "compare1"], false],
+          COMPARE_COLORS[0],
+          ["boolean", ["feature-state", "compare2"], false],
+          COMPARE_COLORS[1],
+          ["boolean", ["feature-state", "compare3"], false],
+          COMPARE_COLORS[2],
+          choroplethOn ? fillExpr ?? "#c7c9d1" : "#c7c9d1",
+        ],
+        "fill-opacity": [
+          "case",
+          ["boolean", ["feature-state", "selected"], false],
+          choroplethOn ? 0.75 : 0.5,
+          ["boolean", ["feature-state", "compare1"], false],
+          choroplethOn ? 0.75 : 0.5,
+          ["boolean", ["feature-state", "compare2"], false],
+          choroplethOn ? 0.75 : 0.5,
+          ["boolean", ["feature-state", "compare3"], false],
+          choroplethOn ? 0.75 : 0.5,
+          choroplethOn ? 0.55 : 0.22,
+        ],
+        "fill-outline-color": choroplethOn ? "transparent" : "rgba(10,10,10,0.18)",
+      },
+    }),
+    [choroplethOn, fillExpr]
+  );
 
   const zonesLine: LayerProps = useMemo(
     () => ({
@@ -217,8 +278,30 @@ const zonesFill: LayerProps = useMemo(
       type: "line",
       paint: {
         "line-color": "#0a0a0a",
-        "line-width": ["case", ["boolean", ["feature-state", "selected"], false], 2, 0.6],
-        "line-opacity": ["case", ["boolean", ["feature-state", "selected"], false], 0.9, 0.45],
+        "line-width": [
+          "case",
+          ["boolean", ["feature-state", "selected"], false],
+          2,
+          ["boolean", ["feature-state", "compare1"], false],
+          2,
+          ["boolean", ["feature-state", "compare2"], false],
+          2,
+          ["boolean", ["feature-state", "compare3"], false],
+          2,
+          0.6,
+        ],
+        "line-opacity": [
+          "case",
+          ["boolean", ["feature-state", "selected"], false],
+          0.9,
+          ["boolean", ["feature-state", "compare1"], false],
+          0.9,
+          ["boolean", ["feature-state", "compare2"], false],
+          0.9,
+          ["boolean", ["feature-state", "compare3"], false],
+          0.9,
+          0.45,
+        ],
       },
     }),
     []
