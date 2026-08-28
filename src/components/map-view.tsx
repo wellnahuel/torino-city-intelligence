@@ -16,7 +16,7 @@ import * as maplibregl from "maplibre-gl";
 import type { ExpressionSpecification, StyleSpecification } from "maplibre-gl";
 import type { FeatureCollection, MultiPolygon, Polygon } from "geojson";
 import "maplibre-gl/dist/maplibre-gl.css";
-import type { LayerKey, Zone } from "@/types/data";
+import type { LayerKey, MapSelection, Zone } from "@/types/data";
 
 maplibregl.setWorkerUrl("/maplibre/maplibre-gl-worker.mjs");
 
@@ -59,6 +59,8 @@ interface MapViewProps {
   layerData: Partial<Record<LayerKey, FeatureCollection>>;
   active: Set<LayerKey>;
   choroplethOn: boolean;
+  /** Selection contract — highlight/fly are derived from this in the T12 refactor. */
+  selected: MapSelection;
   onZoneSelect: (zone: Zone | null) => void;
   onBasemapError: (failed: boolean) => void;
 }

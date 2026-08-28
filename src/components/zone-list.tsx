@@ -22,6 +22,9 @@ import {
 
 const MODES: SortMode[] = ["best", "asc", "desc"];
 
+/** DOM id of the sidebar/drawer panel — referenced by aria-controls in map-app. */
+export const ZONE_LIST_PANEL_ID = "zone-list-panel";
+
 /** Sortable header columns (rank is implicit and not sortable). */
 const COLUMNS: { key: SortKey; width: string; unitKey?: string }[] = [
   { key: "name", width: "min-w-0" },
@@ -41,9 +44,11 @@ interface ZoneListProps {
   onSelect: (zone: Zone) => void;
   /** Closes the drawer/sidebar (mobile X button and lg collapse toggle). */
   onClose: () => void;
+  /** Whether the sidebar/drawer is currently open (drives the lg collapse toggle aria-expanded). */
+  open: boolean;
 }
 
-export function ZoneList({ zones, selected, onSelect, onClose }: ZoneListProps) {
+export function ZoneList({ zones, selected, onSelect, onClose, open }: ZoneListProps) {
   const t = useTranslations("ZoneList");
 
   const [sortKey, setSortKey] = useState<SortKey>("total");
@@ -166,6 +171,8 @@ export function ZoneList({ zones, selected, onSelect, onClose }: ZoneListProps) 
             type="button"
             onClick={onClose}
             aria-label={t("closeList")}
+            aria-expanded={open}
+            aria-controls={ZONE_LIST_PANEL_ID}
             className="hidden h-6 w-6 items-center justify-center rounded-md border border-border text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent lg:inline-flex"
           >
             ‹
