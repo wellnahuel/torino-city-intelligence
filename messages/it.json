@@ -87,6 +87,22 @@
       }
     }
   },
+  "Compare": {
+    "title": "Confronta zone",
+    "tabLabel": "Confronto ({count})",
+    "detailsTab": "Dettagli",
+    "add": "Aggiungi al confronto",
+    "remove": "Rimuovi dal confronto",
+    "removeZone": "Rimuovi {name} dal confronto",
+    "clear": "Svuota",
+    "empty": "Aggiungi almeno 2 zone per confrontarle.",
+    "maxReached": "Massimo 3 zone",
+    "maxReachedHint": "Puoi confrontare fino a 3 zone. Rimuovine una per aggiungerne un'altra.",
+    "winner": "Migliore in assoluto",
+    "rankLabel": "Posizione",
+    "totalLabel": "Totale",
+    "populationLabel": "Popolazione"
+  },
   "Footer": {
     "osm": "Dati mappa © contributori OpenStreetMap (ODbL 1.0)",
     "aperto": "Zone e popolazione © aperTO — Città di Torino (CC BY 4.0)",
