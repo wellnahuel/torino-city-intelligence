@@ -5,9 +5,12 @@ import dynamic from "next/dynamic";
 import { useTranslations } from "next-intl";
 import type { FeatureCollection, MultiPolygon, Polygon } from "geojson";
 import { fetchLayer, fetchLayerCounts, fetchZones } from "@/lib/data";
+import { DEFAULT_POSITIONS, applyWeights, weightsEqual, type ScoringWeights } from "@/lib/scoring";
 import {
+  FACTOR_KEYS,
   LAYER_KEYS,
   NULL_SELECTION,
+  type FactorKey,
   type LayerCounts,
   type LayerKey,
   type MapSelection,
@@ -41,6 +44,8 @@ export function MapApp() {
   const [layerData, setLayerData] = useState<Partial<Record<LayerKey, FeatureCollection>>>({});
   const [active, setActive] = useState<Set<LayerKey>>(new Set(["cafes"]));
   const [choroplethOn, setChoroplethOn] = useState(true);
+  /** Custom scoring weights — slider positions 0-100 per factor (DEFAULT_POSITIONS = official view). */
+  const [weights, setWeights] = useState<ScoringWeights>(DEFAULT_POSITIONS);
   const [selection, setSelection] = useState<MapSelection>(NULL_SELECTION);
   /** Mobile overlay drawer — closed by default on fresh load. */
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -74,6 +79,51 @@ export function MapApp() {
       cancelled = true;
     };
   }, []);
+
+  /** Sliders differ from defaults → custom scoring mode (badge + legend swap). */
+  const isCustom = !weightsEqual(weights, DEFAULT_POSITIONS);
+  /** Recomputed scores: identity (original reference) on defaults, cloned totals otherwise. */
+  const displayScores = useMemo(
+    () => (scores ? applyWeights(scores, weights) : null),
+    [scores, weights]
+  );
+
+  // READ persisted weights ONCE after mount (SSR-safe — effects never run server-side).
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("tci.weights.v1");
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as Partial<Record<FactorKey, unknown>>;
+      const next = { ...DEFAULT_POSITIONS };
+      for (const k of FACTOR_KEYS) {
+        const v = parsed[k];
+        if (typeof v === "number" && Number.isFinite(v)) {
+          next[k] = Math.min(100, Math.max(0, Math.round(v)));
+        }
+      }
+      // Stored == defaults → no pointless render. The setState is deferred out
+      // of the effect body so the first client render matches the SSR output
+      // (no hydration mismatch) and the update lands right after paint.
+      if (!weightsEqual(next, DEFAULT_POSITIONS)) {
+        queueMicrotask(() => setWeights(next));
+      }
+    } catch {
+      // Corrupt storage → keep defaults, no crash.
+    }
+  }, []);
+
+  // WRITE on every change; remove the key when back to defaults (reset clears storage).
+  useEffect(() => {
+    try {
+      if (!isCustom) {
+        localStorage.removeItem("tci.weights.v1");
+      } else {
+        localStorage.setItem("tci.weights.v1", JSON.stringify(weights));
+      }
+    } catch {
+      // Storage unavailable (private mode, etc.) — in-memory weights still work.
+    }
+  }, [isCustom, weights]);
 
   const toggleLayer = useCallback(
     (key: LayerKey) => {
@@ -167,7 +217,7 @@ export function MapApp() {
         } ${sidebarCollapsed ? "lg:hidden" : ""}`}
       >
         <ZoneList
-          zones={scores?.features ?? []}
+          zones={displayScores?.features ?? []}
           selected={selection.zone}
           onSelect={handleListZoneSelect}
           onClose={handleCloseList}
@@ -178,7 +228,7 @@ export function MapApp() {
       {/* Map wrapper — all absolute overlays live here, anchored to the map area */}
       <div className="relative min-w-0 flex-1">
         <MapView
-          scores={scores}
+          scores={displayScores}
           layerData={layerData}
           active={active}
           choroplethOn={choroplethOn}
