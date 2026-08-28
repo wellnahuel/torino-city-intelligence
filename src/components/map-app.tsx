@@ -390,7 +390,7 @@ export function MapApp() {
 
         {/* Score panel */}
         <div className="absolute inset-x-3 bottom-3 z-30 max-h-[45%] overflow-y-auto rounded-xl border border-border bg-card/95 p-4 shadow-xl backdrop-blur lg:inset-x-auto lg:inset-y-3 lg:right-3 lg:max-h-[calc(100%-1.5rem)] lg:w-[340px]">
-          <ScorePanel zone={selection.zone} allLayersOff={active.size === 0} />
+          <ScorePanel zone={selection.zone} allLayersOff={active.size === 0} weights={weights} />
         </div>
 
         {/* Mobile drawer backdrop */}

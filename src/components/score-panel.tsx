@@ -2,25 +2,36 @@
 
 import { useMemo } from "react";
 import { useTranslations } from "next-intl";
-import type { Zone } from "@/types/data";
-import { WEIGHTS } from "@/lib/scoring";
+import type { FactorKey, Zone } from "@/types/data";
+import {
+  DEFAULT_POSITIONS,
+  computeContribution,
+  computeZoneScore,
+  normalizeWeights,
+  weightsEqual,
+  type ScoringWeights,
+} from "@/lib/scoring";
 import { InfoTip } from "./info-tip";
 
 interface VariableRow {
-  key: "cafe" | "traffic" | "transit" | "population" | "flow";
+  key: FactorKey;
   weight: number;
   raw: string;
-  norm: number;
   inverse: boolean;
 }
 
 interface ScorePanelProps {
   zone: Zone | null;
   allLayersOff: boolean;
+  weights: ScoringWeights;
 }
 
-export function ScorePanel({ zone, allLayersOff }: ScorePanelProps) {
+export function ScorePanel({ zone, allLayersOff, weights }: ScorePanelProps) {
   const t = useTranslations("Scoring");
+
+  /** Current slider positions normalized to Σ=1 — the breakdown tracks live weights. */
+  const normW = useMemo(() => normalizeWeights(weights), [weights]);
+  const isCustom = !weightsEqual(weights, DEFAULT_POSITIONS);
 
   const rows: VariableRow[] = useMemo(() => {
     if (!zone) return [];
@@ -31,43 +42,45 @@ export function ScorePanel({ zone, allLayersOff }: ScorePanelProps) {
     return [
       {
         key: "cafe",
-        weight: WEIGHTS.cafe,
+        weight: normW.cafe,
         raw: fmt(p.cafe_density, 2),
-        norm: p.cafe_norm ?? 0,
         inverse: true,
       },
       {
         key: "traffic",
-        weight: WEIGHTS.traffic,
+        weight: normW.traffic,
         raw: fmt(p.traffic_raw, 2),
-        norm: p.traffic_norm ?? 0,
         inverse: false,
       },
       {
         key: "transit",
-        weight: WEIGHTS.transit,
+        weight: normW.transit,
         raw: fmt(p.stops500m, 0),
-        norm: p.transit_norm ?? 0,
         inverse: false,
       },
       {
         key: "population",
-        weight: WEIGHTS.population,
+        weight: normW.population,
         raw: fmt(p.pop2023, 0),
-        norm: p.pop_norm ?? 0,
         inverse: false,
       },
       {
         key: "flow",
-        weight: WEIGHTS.flow,
+        weight: normW.flow,
         raw: fmt(p.flow_raw, 2),
-        norm: p.flow_norm ?? 0,
         inverse: false,
       },
     ];
-  }, [zone]);
+  }, [zone, normW]);
 
-  const total = zone?.properties.total ?? null;
+  /**
+   * Total recomputed from zone norms + CURRENT weights at render — NOT from
+   * properties.total (a held selection captured under earlier weights is stale).
+   */
+  const total = useMemo(
+    () => (zone ? computeZoneScore(zone.properties, normW) : null),
+    [zone, normW]
+  );
 
   return (
     <div className="flex flex-col gap-4">
@@ -95,7 +108,9 @@ export function ScorePanel({ zone, allLayersOff }: ScorePanelProps) {
       {zone ? (
         <>
           <div className="flex items-baseline justify-between rounded-lg border border-border bg-background px-3 py-2">
-            <span className="text-xs text-muted-foreground">{t("total")}</span>
+            <span className="text-xs text-muted-foreground">
+              {t(isCustom ? "customTotal" : "total")}
+            </span>
             <span className="font-mono text-2xl font-semibold text-accent">
               {total === null ? "–" : Math.round(total * 10) / 10}
             </span>
@@ -112,7 +127,7 @@ export function ScorePanel({ zone, allLayersOff }: ScorePanelProps) {
             </thead>
             <tbody>
               {rows.map((r) => {
-                const contribution = r.weight * (r.inverse ? 1 - r.norm : r.norm);
+                const contribution = computeContribution(zone.properties, r.key, normW);
                 return (
                   <tr key={r.key} className="border-b border-border/60 last:border-0">
                     <td className="py-1.5 pr-2">
