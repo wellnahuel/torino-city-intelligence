@@ -18,6 +18,17 @@ export const LAYER_KEYS: LayerKey[] = [
   "green",
 ];
 
+/** Scoring factor keys, ordered like WEIGHTS (cafe, traffic, transit, population, flow). */
+export type FactorKey = "cafe" | "traffic" | "transit" | "population" | "flow";
+
+export const FACTOR_KEYS: FactorKey[] = [
+  "cafe",
+  "traffic",
+  "transit",
+  "population",
+  "flow",
+];
+
 /** Properties of scores.geojson features (design data contract + additive fields). */
 export interface ZoneScoreProperties {
   ZONASTAT: string;
