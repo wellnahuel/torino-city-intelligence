@@ -12,10 +12,13 @@ import {
   type LayerProps,
   type MapLayerMouseEvent,
 } from "react-map-gl/maplibre";
+import * as maplibregl from "maplibre-gl";
 import type { ExpressionSpecification, StyleSpecification } from "maplibre-gl";
 import type { FeatureCollection, MultiPolygon, Polygon } from "geojson";
 import "maplibre-gl/dist/maplibre-gl.css";
 import type { LayerKey, Zone } from "@/types/data";
+
+maplibregl.setWorkerUrl("/maplibre/maplibre-gl-worker.mjs");
 
 const TORINO = { longitude: 7.6869, latitude: 45.0703, zoom: 11.5 };
 
@@ -167,6 +170,7 @@ export function MapView({
       <Map
         key={mapKey}
         ref={mapRef}
+        mapLib={maplibregl}
         mapStyle={mapStyle}
         initialViewState={TORINO}
         interactiveLayerIds={["zones-fill"]}
