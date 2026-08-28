@@ -44,31 +44,38 @@
     "variablesTitle": "Come funziona il punteggio",
     "intro": "Ognuna delle 94 zone statistiche di Torino riceve un punteggio da 0 a 100 basato su cinque variabili ponderate. Una minore densità di caffè ottiene un punteggio migliore; per le altre vale il contrario.",
     "inverseMark": "(meno = meglio)",
+    "infoLabel": "Info su questo fattore",
+    "weightLabel": "Peso:",
     "totalNote": "Totale = somma dei contributi, scala 0-100.",
     "variable": {
       "cafe": {
         "name": "Concorrenza caffè",
         "desc": "Inverso della densità di caffè nella zona. Meno concorrenti → punteggio più alto.",
+        "tooltip": "Competizione dei caffè: caffè per km² nella zona. È l'unico fattore inverso — meno caffè esistenti significa meno concorrenza e punteggio migliore.",
         "weight": "30%"
       },
       "traffic": {
         "name": "Traffico potenziale",
         "desc": "Densità di POI e mix di usi del suolo come proxy del traffico pedonale.",
+        "tooltip": "Flusso potenziale di clienti: punti di interesse commerciali (caffè, ristoranti e servizi) per km². Più attività commerciale significa più passaggio potenziale di persone.",
         "weight": "25%"
       },
       "transit": {
         "name": "Accesso al trasporto",
         "desc": "Fermate entro 500 m dal centroide della zona.",
+        "tooltip": "Accesso ai trasporti: fermate del trasporto pubblico entro 500 m dal centro della zona. Un miglior accesso significa che più clienti possono raggiungere il locale.",
         "weight": "20%"
       },
       "population": {
         "name": "Popolazione",
         "desc": "Residenti nella zona (aperTO 2023).",
+        "tooltip": "Residenti nella zona (dati censimento aperTO 2023). Più residenti significa più domanda locale.",
         "weight": "15%"
       },
       "flow": {
         "name": "Flusso diurno",
         "desc": "Scuole e negozi come proxy dei visitatori diurni.",
+        "tooltip": "Flusso diurno: scuole e servizi per km². Queste 'ancore diurne' attirano persone durante l'orario lavorativo, aumentando i potenziali clienti.",
         "weight": "10%"
       }
     }

@@ -44,31 +44,38 @@
     "variablesTitle": "How the score works",
     "intro": "Each of Turin's 94 statistical zones gets a 0-100 score from five weighted variables. Lower café density scores better; the rest score better the higher their value.",
     "inverseMark": "(fewer = better)",
+    "infoLabel": "About this factor",
+    "weightLabel": "Weight:",
     "totalNote": "Total = sum of contributions, 0-100 scale.",
     "variable": {
       "cafe": {
         "name": "Café competition",
         "desc": "Inverse of café density in the zone. Fewer competitors → higher score.",
+        "tooltip": "Café competition: cafés per km² in the zone. This is the only inverse factor — fewer existing cafés means less competition and a better score.",
         "weight": "30%"
       },
       "traffic": {
         "name": "Potential traffic",
         "desc": "POI density and land-use mix as a proxy for foot traffic.",
+        "tooltip": "Potential customer traffic: commercial points of interest (cafés, restaurants and services) per km². More commercial activity means more potential foot traffic.",
         "weight": "25%"
       },
       "transit": {
         "name": "Transit access",
         "desc": "Transit stops within 500 m of the zone centroid.",
+        "tooltip": "Transit access: transit stops within 500 m of the zone centre. Better public transport access means more customers can reach the café.",
         "weight": "20%"
       },
       "population": {
         "name": "Population",
         "desc": "Residents in the zone (aperTO 2023).",
+        "tooltip": "Residents in the zone (aperTO 2023 census data). More residents means more local demand for a café.",
         "weight": "15%"
       },
       "flow": {
         "name": "Daytime flow",
         "desc": "Schools and shops as a proxy for daytime visitors.",
+        "tooltip": "Daytime flow: schools and services per km². These 'daytime anchors' attract people during working hours, increasing potential customers.",
         "weight": "10%"
       }
     }

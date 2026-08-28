@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { useTranslations } from "next-intl";
 import type { Zone } from "@/types/data";
 import { WEIGHTS } from "@/lib/scoring";
+import { InfoTip } from "./info-tip";
 
 interface VariableRow {
   key: "cafe" | "traffic" | "transit" | "population" | "flow";
@@ -115,14 +116,27 @@ export function ScorePanel({ zone, allLayersOff }: ScorePanelProps) {
                 return (
                   <tr key={r.key} className="border-b border-border/60 last:border-0">
                     <td className="py-1.5 pr-2">
-                      <p className="font-medium text-foreground">
-                        {t(`variable.${r.key}.name`)}
+                      <div className="flex items-center gap-1">
+                        <p className="font-medium text-foreground">
+                          {t(`variable.${r.key}.name`)}
+                        </p>
+                        <InfoTip label={t("infoLabel")}>
+                          <p className="font-medium text-foreground">
+                            {t(`variable.${r.key}.name`)}
+                          </p>
+                          <p className="mt-1 text-muted-foreground">
+                            {t(`variable.${r.key}.tooltip`)}
+                          </p>
+                          <p className="mt-2 border-t border-border/60 pt-1.5 text-muted-foreground">
+                            {t("weightLabel")} {Math.round(r.weight * 100)}%
+                          </p>
+                        </InfoTip>
                         {r.inverse && (
-                          <span className="ml-1 text-[10px] text-muted-foreground">
+                          <span className="text-[10px] text-muted-foreground">
                             {t("inverseMark")}
                           </span>
                         )}
-                      </p>
+                      </div>
                       <p className="text-[10px] leading-tight text-muted-foreground">
                         {t(`variable.${r.key}.desc`)}
                       </p>

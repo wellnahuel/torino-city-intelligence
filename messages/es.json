@@ -44,31 +44,38 @@
     "variablesTitle": "Cómo funciona el puntaje",
     "intro": "Cada una de las 94 zonas estadísticas de Turín recibe un puntaje de 0 a 100 a partir de cinco variables ponderadas. Una menor densidad de cafés puntúa mejor; el resto puntúa mejor cuanto más alto sea su valor.",
     "inverseMark": "(menos = mejor)",
+    "infoLabel": "Información sobre este factor",
+    "weightLabel": "Peso:",
     "totalNote": "Total = suma de los aportes, escala de 0 a 100.",
     "variable": {
       "cafe": {
         "name": "Competencia de cafés",
         "desc": "Inversa de la densidad de cafés en la zona. Menos competidores → más puntaje.",
+        "tooltip": "Competencia de cafeterías: cafés por km² en la zona. Es el único factor inverso — menos cafeterías existentes significa menos competencia y mejor puntaje.",
         "weight": "30%"
       },
       "traffic": {
         "name": "Tráfico potencial",
         "desc": "Densidad de POI y mezcla de usos de suelo como proxy de tránsito peatonal.",
+        "tooltip": "Tráfico potencial de clientes: puntos de interés comerciales (cafés, restaurantes y servicios) por km². Más actividad comercial significa más tránsito potencial de personas.",
         "weight": "25%"
       },
       "transit": {
         "name": "Acceso a transporte",
         "desc": "Paradas de transporte a menos de 500 m del centroide de la zona.",
+        "tooltip": "Acceso al transporte: paradas de transporte público a menos de 500 m del centro de la zona. Mejor acceso significa que más clientes pueden llegar.",
         "weight": "20%"
       },
       "population": {
         "name": "Población",
         "desc": "Residentes en la zona (aperTO 2023).",
+        "tooltip": "Residentes en la zona (datos de censo aperTO 2023). Más residentes significa más demanda local.",
         "weight": "15%"
       },
       "flow": {
         "name": "Flujo diurno",
         "desc": "Escuelas y comercios como proxy de visitantes diurnos.",
+        "tooltip": "Flujo diurno: escuelas y servicios por km². Estos 'anclas diurnas' atraen gente durante el horario laboral, aumentando los clientes potenciales.",
         "weight": "10%"
       }
     }
