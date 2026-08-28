@@ -24,10 +24,23 @@ interface ScorePanelProps {
   zone: Zone | null;
   allLayersOff: boolean;
   weights: ScoringWeights;
+  /** Selected zone is currently in the comparison set (pin active). */
+  inCompare: boolean;
+  /** Compare set is at the 3-zone cap — add disabled. */
+  compareFull: boolean;
+  onToggleCompare: () => void;
 }
 
-export function ScorePanel({ zone, allLayersOff, weights }: ScorePanelProps) {
+export function ScorePanel({
+  zone,
+  allLayersOff,
+  weights,
+  inCompare,
+  compareFull,
+  onToggleCompare,
+}: ScorePanelProps) {
   const t = useTranslations("Scoring");
+  const tC = useTranslations("Compare");
 
   /** Current slider positions normalized to Σ=1 — the breakdown tracks live weights. */
   const normW = useMemo(() => normalizeWeights(weights), [weights]);
@@ -96,9 +109,39 @@ export function ScorePanel({ zone, allLayersOff, weights }: ScorePanelProps) {
             <h3 className="text-sm font-semibold leading-snug">
               {zone.properties.name || zone.properties.ZONASTAT}
             </h3>
-            <span className="font-mono text-xs text-muted-foreground">
-              {zone.properties.ZONASTAT}
-            </span>
+            <div className="flex items-center gap-1.5">
+              <span className="font-mono text-xs text-muted-foreground">
+                {zone.properties.ZONASTAT}
+              </span>
+              <button
+                type="button"
+                aria-pressed={inCompare}
+                title={inCompare ? tC("remove") : compareFull ? tC("maxReached") : tC("add")}
+                aria-label={inCompare ? tC("remove") : tC("add")}
+                disabled={!inCompare && compareFull}
+                onClick={onToggleCompare}
+                className={`flex h-6 w-6 items-center justify-center rounded-md border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:cursor-not-allowed disabled:opacity-40 ${
+                  inCompare
+                    ? "border-accent bg-accent/10 text-accent"
+                    : "border-border text-muted-foreground hover:border-accent/60 hover:text-foreground"
+                }`}
+              >
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M12 17v5" />
+                  <path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1z" />
+                </svg>
+              </button>
+            </div>
           </div>
         ) : (
           <p className="mt-2 text-sm text-muted-foreground">{t("noZone")}</p>

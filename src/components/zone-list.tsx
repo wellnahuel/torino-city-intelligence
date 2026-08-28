@@ -46,10 +46,22 @@ interface ZoneListProps {
   onClose: () => void;
   /** Whether the sidebar/drawer is currently open (drives the lg collapse toggle aria-expanded). */
   open: boolean;
+  /** Session comparison set — drives each row's toggle state. */
+  compare: Zone[];
+  onToggleCompare: (zone: Zone) => void;
 }
 
-export function ZoneList({ zones, selected, onSelect, onClose, open }: ZoneListProps) {
+export function ZoneList({
+  zones,
+  selected,
+  onSelect,
+  onClose,
+  open,
+  compare,
+  onToggleCompare,
+}: ZoneListProps) {
   const t = useTranslations("ZoneList");
+  const tC = useTranslations("Compare");
 
   const [sortKey, setSortKey] = useState<SortKey>("total");
   const [sortMode, setSortMode] = useState<SortMode>("best");
@@ -73,6 +85,13 @@ export function ZoneList({ zones, selected, onSelect, onClose, open }: ZoneListP
   );
 
   const selectedCode = selected?.properties.ZONASTAT ?? null;
+
+  /** ZONASTAT codes in the compare set — O(1) membership per row. */
+  const compareCodes = useMemo(
+    () => new Set(compare.map((z) => z.properties.ZONASTAT)),
+    [compare]
+  );
+  const compareFull = compare.length >= 3;
 
   const selectedVisibleIndex = useMemo(
     () =>
@@ -217,6 +236,9 @@ export function ZoneList({ zones, selected, onSelect, onClose, open }: ZoneListP
         <table className="w-full table-fixed" onKeyDown={handleTableKeyDown}>
           <thead className="sticky top-0 z-10 bg-card">
             <tr className="border-b border-border">
+              <th scope="col" className="w-6 px-0.5 pb-1 align-bottom">
+                <span className="sr-only">{tC("title")}</span>
+              </th>
               <th
                 scope="col"
                 className="w-6 px-0.5 pb-1 align-bottom font-medium text-muted-foreground"
@@ -268,7 +290,7 @@ export function ZoneList({ zones, selected, onSelect, onClose, open }: ZoneListP
           <tbody>
             {zones.length === 0 ? null : rows.length === 0 ? (
               <tr>
-                <td colSpan={8} className="px-3 py-6 text-center text-[10px] text-muted-foreground">
+                <td colSpan={9} className="px-3 py-6 text-center text-[10px] text-muted-foreground">
                   {t("noResults", { query })}
                 </td>
               </tr>
@@ -281,6 +303,9 @@ export function ZoneList({ zones, selected, onSelect, onClose, open }: ZoneListP
                   index={index}
                   selected={zone.properties.ZONASTAT === selectedCode}
                   tabIndex={index === tabbableIndex ? 0 : -1}
+                  inCompare={compareCodes.has(zone.properties.ZONASTAT)}
+                  compareFull={compareFull}
+                  onToggleCompare={onToggleCompare}
                   onSelectRow={onSelect}
                   onFocusRow={handleRowFocus}
                   registerRow={registerRow}

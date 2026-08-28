@@ -1,6 +1,7 @@
 "use client";
 
 import { memo, type FocusEvent, type KeyboardEvent, type MouseEvent } from "react";
+import { useTranslations } from "next-intl";
 import type { Zone } from "@/types/data";
 import { formatCellValue, zoneName } from "@/lib/zone-list";
 
@@ -12,16 +13,25 @@ interface ZoneListRowProps {
   index: number;
   selected: boolean;
   tabIndex: number;
+  /** Zone is currently in the comparison set (toggle active). */
+  inCompare: boolean;
+  /** Compare set is at the 3-zone cap — add disabled. */
+  compareFull: boolean;
+  onToggleCompare: (zone: Zone) => void;
   onSelectRow: (zone: Zone) => void;
   onFocusRow: (e: FocusEvent<HTMLTableRowElement>) => void;
   registerRow: (el: HTMLTableRowElement | null) => void;
 }
 
 /**
- * A single zone row: rank, truncated name, total score and the five raw
- * factor values. Rendered as a focusable table row (roving tabindex +
+ * A single zone row: compare toggle, rank, truncated name, total score and the
+ * five raw factor values. Rendered as a focusable table row (roving tabindex +
  * `aria-selected` — aria-selected is only valid on row/option roles, so the
  * row is NOT a <button>; Enter/Space activate it like one).
+ *
+ * The leading compare toggle must NEVER trigger select/fly/scroll: it stops
+ * propagation on click AND on Enter/Space keydown (the row's own handlers),
+ * while arrow keys bubble to the table for roving tabindex.
  */
 export const ZoneListRow = memo(function ZoneListRow({
   zone,
@@ -29,12 +39,17 @@ export const ZoneListRow = memo(function ZoneListRow({
   index,
   selected,
   tabIndex,
+  inCompare,
+  compareFull,
+  onToggleCompare,
   onSelectRow,
   onFocusRow,
   registerRow,
 }: ZoneListRowProps) {
+  const tC = useTranslations("Compare");
   const p = zone.properties;
   const name = zoneName(zone);
+  const toggleLabel = inCompare ? tC("remove") : compareFull ? tC("maxReached") : tC("add");
 
   const handleClick = (e: MouseEvent<HTMLTableRowElement>) => {
     e.currentTarget.focus();
@@ -65,6 +80,42 @@ export const ZoneListRow = memo(function ZoneListRow({
         selected ? "bg-accent/10" : "hover:bg-accent/5"
       }`}
     >
+      <td className="w-6 px-0.5 py-1">
+        <button
+          type="button"
+          aria-pressed={inCompare}
+          disabled={!inCompare && compareFull}
+          aria-label={toggleLabel}
+          title={toggleLabel}
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleCompare(zone);
+          }}
+          onKeyDown={(e) => {
+            // Block the row's Enter/Space select; arrow keys pass → table roving intact.
+            if (e.key === "Enter" || e.key === " ") e.stopPropagation();
+          }}
+          className={`flex h-3.5 w-3.5 items-center justify-center rounded-sm border transition-colors disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
+            inCompare
+              ? "border-accent bg-accent text-accent-foreground"
+              : "border-border text-transparent hover:border-accent/60"
+          }`}
+        >
+          <svg
+            width="10"
+            height="10"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="3"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M20 6 9 17l-5-5" />
+          </svg>
+        </button>
+      </td>
       <td className="w-6 px-0.5 py-1 font-mono text-[10px] tabular-nums text-muted-foreground">
         {rank}
       </td>

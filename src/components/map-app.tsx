@@ -288,6 +288,8 @@ export function MapApp() {
           onSelect={handleListZoneSelect}
           onClose={handleCloseList}
           open={!sidebarCollapsed}
+          compare={compare}
+          onToggleCompare={toggleCompare}
         />
       </aside>
 
@@ -497,7 +499,16 @@ export function MapApp() {
               onClear={() => setCompare([])}
             />
           ) : (
-            <ScorePanel zone={selection.zone} allLayersOff={active.size === 0} weights={weights} />
+            <ScorePanel
+              zone={selection.zone}
+              allLayersOff={active.size === 0}
+              weights={weights}
+              inCompare={
+                selection.zone ? compareCodes.has(selection.zone.properties.ZONASTAT) : false
+              }
+              compareFull={compareFull}
+              onToggleCompare={() => selection.zone && toggleCompare(selection.zone)}
+            />
           )}
         </div>
 
