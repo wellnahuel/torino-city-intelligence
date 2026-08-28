@@ -20,7 +20,9 @@ import {
 import { LayerToggle } from "@/components/layer-toggle";
 import { MapLoading } from "@/components/map-loading";
 import { ScorePanel } from "@/components/score-panel";
+import { ComparePanel } from "@/components/compare-panel";
 import { ZoneList, ZONE_LIST_PANEL_ID } from "@/components/zone-list";
+import { buildCompareRows, overallWinner } from "@/lib/compare";
 
 const MapView = dynamic(
   () => import("@/components/map-view").then((m) => m.MapView),
@@ -36,6 +38,7 @@ export function MapApp() {
   const t = useTranslations("Map");
   const tz = useTranslations("ZoneList");
   const tS = useTranslations("Scoring");
+  const tC = useTranslations("Compare");
 
   const [counts, setCounts] = useState<LayerCounts | null>(null);
   const [scores, setScores] = useState<FeatureCollection<
@@ -50,6 +53,12 @@ export function MapApp() {
   /** Weights accordion — collapsed by default (zero visual delta on load). */
   const [weightsOpen, setWeightsOpen] = useState(false);
   const [selection, setSelection] = useState<MapSelection>(NULL_SELECTION);
+  /** Session-only comparison set (cap 3) — INDEPENDENT of selection (mutually non-interfering). */
+  const [compare, setCompare] = useState<Zone[]>([]);
+  /** Compare tab — false keeps the single-zone ScorePanel flow untouched. */
+  const [compareOpen, setCompareOpen] = useState(false);
+  /** Transient notice: "max" → cap reached hint (auto-clears after 2s). */
+  const [compareHint, setCompareHint] = useState<"max" | null>(null);
   /** Mobile overlay drawer — closed by default on fresh load. */
   const [drawerOpen, setDrawerOpen] = useState(false);
   /** lg+ persistent sidebar — visible unless the user collapses it. */
@@ -188,6 +197,55 @@ export function MapApp() {
   const handleWeightChange = useCallback((key: FactorKey, v: number) => {
     setWeights((w) => ({ ...w, [key]: v }));
   }, []);
+
+  /** ZONASTAT codes in the compare set — O(1) membership checks for all entry points. */
+  const compareCodes = useMemo(
+    () => new Set(compare.map((z) => z.properties.ZONASTAT)),
+    [compare]
+  );
+  const compareFull = compare.length >= 3;
+
+  /**
+   * Add/remove a zone from the comparison (cap 3). The "max" hint is set
+   * OUTSIDE the setCompare updater — no setState inside an updater (StrictMode
+   * double-invoke purity). The 2nd add auto-switches to the ComparePanel.
+   */
+  const toggleCompare = useCallback(
+    (zone: Zone) => {
+      const inCompare = compareCodes.has(zone.properties.ZONASTAT);
+      if (inCompare) {
+        setCompare((c) => c.filter((z) => z.properties.ZONASTAT !== zone.properties.ZONASTAT));
+      } else if (compare.length >= 3) {
+        setCompareHint("max");
+      } else {
+        setCompare((c) => [...c, zone]);
+        if (compare.length === 1) setCompareOpen(true);
+      }
+    },
+    [compareCodes, compare.length]
+  );
+
+  /** Remove one zone — remaining zones re-index 1..N so map colors stay stable. */
+  const removeFromCompare = useCallback((zone: Zone) => {
+    setCompare((c) => c.filter((z) => z.properties.ZONASTAT !== zone.properties.ZONASTAT));
+  }, []);
+
+  // Auto-clear the cap hint after 2s (transient inline notice — zero layout shift).
+  useEffect(() => {
+    if (!compareHint) return;
+    const id = setTimeout(() => setCompareHint(null), 2000);
+    return () => clearTimeout(id);
+  }, [compareHint]);
+
+  /** Transposed rows for the compare panel — recomputed from CURRENT weights. */
+  const compareRows = useMemo(
+    () => (displayScores ? buildCompareRows(compare, weights, displayScores.features) : []),
+    [compare, weights, displayScores]
+  );
+  const compareWinner = useMemo(
+    () => (compare.length ? overallWinner(compare, weights) : -1),
+    [compare, weights]
+  );
 
   // Escape closes the mobile drawer and returns focus to the floating toggle.
   useEffect(() => {
@@ -388,9 +446,59 @@ export function MapApp() {
           </div>
         )}
 
-        {/* Score panel */}
+        {/* Score / compare panel — ComparePanel swaps into this slot at ≥2 zones */}
         <div className="absolute inset-x-3 bottom-3 z-30 max-h-[45%] overflow-y-auto rounded-xl border border-border bg-card/95 p-4 shadow-xl backdrop-blur lg:inset-x-auto lg:inset-y-3 lg:right-3 lg:max-h-[calc(100%-1.5rem)] lg:w-[340px]">
-          <ScorePanel zone={selection.zone} allLayersOff={active.size === 0} weights={weights} />
+          {compare.length >= 2 && (
+            <div className="mb-3 flex items-center justify-between gap-2">
+              <div
+                role="group"
+                aria-label={tC("title")}
+                className="flex rounded-md border border-border p-0.5"
+              >
+                <button
+                  type="button"
+                  aria-pressed={!compareOpen}
+                  onClick={() => setCompareOpen(false)}
+                  className={`rounded px-2 py-0.5 text-[10px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
+                    !compareOpen
+                      ? "bg-accent text-accent-foreground"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {tC("detailsTab")}
+                </button>
+                <button
+                  type="button"
+                  aria-pressed={compareOpen}
+                  onClick={() => setCompareOpen(true)}
+                  className={`rounded px-2 py-0.5 text-[10px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
+                    compareOpen
+                      ? "bg-accent text-accent-foreground"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {tC("tabLabel", { count: compare.length })}
+                </button>
+              </div>
+            </div>
+          )}
+          {compareHint === "max" && (
+            <p role="status" className="mb-2 text-[10px] text-muted-foreground">
+              {tC("maxReachedHint")}
+            </p>
+          )}
+          {compareOpen && compare.length >= 2 ? (
+            <ComparePanel
+              rows={compareRows}
+              zones={compare}
+              winnerIndex={compareWinner}
+              onRemove={removeFromCompare}
+              onBack={() => setCompareOpen(false)}
+              onClear={() => setCompare([])}
+            />
+          ) : (
+            <ScorePanel zone={selection.zone} allLayersOff={active.size === 0} weights={weights} />
+          )}
         </div>
 
         {/* Mobile drawer backdrop */}
