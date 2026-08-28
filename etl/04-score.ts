@@ -18,8 +18,9 @@ import * as path from "node:path";
 
 import type { Feature, FeatureCollection, Polygon, MultiPolygon, Position } from "geojson";
 import { WEIGHTS, minMax, weightedTotal } from "../src/lib/scoring";
+import { polygonCentroid, geometryCentroid } from "../src/lib/geometry";
 
-export { WEIGHTS, minMax, weightedTotal };
+export { WEIGHTS, minMax, weightedTotal, polygonCentroid, geometryCentroid };
 
 const ROOT = path.resolve(import.meta.dir, "..");
 const RAW = path.join(ROOT, "etl", "raw");
@@ -64,41 +65,6 @@ export function pointInPolygon(point: Position, poly: Polygon): boolean {
 export function pointInGeometry(point: Position, geom: Polygon | MultiPolygon): boolean {
   if (geom.type === "Polygon") return pointInPolygon(point, geom);
   return geom.coordinates.some((poly) => pointInPolygon(point, { type: "Polygon", coordinates: poly }));
-}
-
-/** Shoelace centroid of the outer ring (planar degrees — fine for tiny polygons). */
-export function polygonCentroid(poly: Polygon): Position {
-  const ring = poly.coordinates[0];
-  let a = 0, cx = 0, cy = 0;
-  for (let i = 0; i < ring.length - 1; i++) {
-    const [x0, y0] = ring[i];
-    const [x1, y1] = ring[i + 1];
-    const cross = x0 * y1 - x1 * y0;
-    a += cross;
-    cx += (x0 + x1) * cross;
-    cy += (y0 + y1) * cross;
-  }
-  a *= 0.5;
-  return [cx / (6 * a), cy / (6 * a)];
-}
-
-export function geometryCentroid(geom: Polygon | MultiPolygon): Position {
-  if (geom.type === "Polygon") return polygonCentroid(geom);
-  // Area-weighted centroid across polygons.
-  let areaSum = 0, cx = 0, cy = 0;
-  for (const poly of geom.coordinates) {
-    const c = polygonCentroid({ type: "Polygon", coordinates: poly });
-    const ring = poly[0];
-    let a = 0;
-    for (let i = 0; i < ring.length - 1; i++) {
-      a += ring[i][0] * ring[i + 1][1] - ring[i + 1][0] * ring[i][1];
-    }
-    a *= 0.5;
-    areaSum += a;
-    cx += c[0] * a;
-    cy += c[1] * a;
-  }
-  return areaSum ? [cx / areaSum, cy / areaSum] : [0, 0];
 }
 
 /** Equirectangular area in km², anchored at the zone latitude. */

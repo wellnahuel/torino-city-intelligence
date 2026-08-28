@@ -46,6 +46,22 @@ export type Zone = Feature<Polygon | MultiPolygon, ZoneScoreProperties>;
 export type POI = Feature<Point, POIProperties>;
 export type LayerGeoJSON = FeatureCollectionLike;
 
+/**
+ * Selection contract shared by the zone list and the map — single source
+ * of truth for the highlighted zone (drives map feature-state, ScorePanel,
+ * and the list's highlighted row).
+ */
+export interface MapSelection {
+  zone: Zone | null;
+  /** "list" → list-originated (fly to zone); "map" → map click (highlight only). */
+  source: "map" | "list" | null;
+  /** Increments on every selection — forces the map effect to re-run on same-zone re-clicks. */
+  nonce: number;
+}
+
+/** Empty selection — no zone highlighted, no fly. */
+export const NULL_SELECTION: MapSelection = { zone: null, source: null, nonce: 0 };
+
 export interface LayerCounts {
   zones: number;
   layers: Record<LayerKey, number>;
