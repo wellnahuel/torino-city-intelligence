@@ -18,6 +18,7 @@ import type { FeatureCollection, MultiPolygon, Polygon } from "geojson";
 import "maplibre-gl/dist/maplibre-gl.css";
 import type { LayerKey, MapSelection, Zone } from "@/types/data";
 import { zoneFeatureId } from "@/lib/zone-list";
+import { quantileBreaks } from "@/lib/scoring";
 import { geometryBounds, geometryCentroid } from "@/lib/geometry";
 
 maplibregl.setWorkerUrl("/maplibre/maplibre-gl-worker.mjs");
@@ -39,30 +40,14 @@ const FALLBACK_STYLE_DARK: StyleSpecification = {
 };
 
 /**
- * Score buckets: pale blue (low) → accent blue (high).
- * Remapped to the REAL score range (30.4–57.1) so every tone is used;
- * previously the 0–100 theoretical scale left the 60–100 buckets empty.
+ * 6-tone ramp for the dynamic quantile choropleth (pale blue → accent blue).
+ * Breaks are re-derived from the CURRENT displayed totals, so extreme custom
+ * weights spread across all six tones instead of piling into fixed buckets.
  */
-const SCORE_BUCKETS: { max: number; color: string }[] = [
-  { max: 35, color: "#dce5ff" },
-  { max: 40, color: "#b0bcff" },
-  { max: 45, color: "#8494ff" },
-  { max: 50, color: "#586bff" },
-  { max: 55, color: "#2c43ff" },
-  { max: 100, color: "#001aff" },
-];
-
-function fillColorExpression(): ExpressionSpecification {
-  const expr: unknown[] = ["case", ["==", ["get", "total"], null], "#f5f5f5"];
-  for (const b of SCORE_BUCKETS) {
-    expr.push(["<", ["get", "total"], b.max], b.color);
-  }
-  expr.push("#001aff");
-  return expr as unknown as ExpressionSpecification;
-}
+const FILL = ["#dce5ff", "#b0bcff", "#8494ff", "#586bff", "#2c43ff", "#001aff"];
 
 interface MapViewProps {
-  scores: FeatureCollection<Polygon | MultiPolygon> | null;
+  displayScores: FeatureCollection<Polygon | MultiPolygon> | null;
   layerData: Partial<Record<LayerKey, FeatureCollection>>;
   active: Set<LayerKey>;
   choroplethOn: boolean;
@@ -73,7 +58,7 @@ interface MapViewProps {
 }
 
 export function MapView({
-  scores,
+  displayScores,
   layerData,
   active,
   choroplethOn,
@@ -111,8 +96,8 @@ export function MapView({
         selectedIdRef.current = null;
       }
       const { zone } = selected;
-      if (!zone || !scores) return;
-      const id = zoneFeatureId(zone, scores);
+      if (!zone || !displayScores) return;
+      const id = zoneFeatureId(zone, displayScores);
       if (id < 0) return;
       map.setFeatureState({ source: "zones", id }, { selected: true });
       selectedIdRef.current = id;
@@ -147,7 +132,7 @@ export function MapView({
     } catch {
       // Map/source not ready (e.g. basemap error) — highlight + fly are best-effort.
     }
-  }, [selected, scores, mapKey, mapReady]);
+  }, [selected, displayScores, mapKey, mapReady]);
 
   const handleClick = useCallback(
     (e: MapLayerMouseEvent) => {
@@ -190,24 +175,41 @@ export function MapView({
     setMapReady(false);
   }, []);
 
-  const zonesFill: LayerProps = useMemo(
-    () => ({
-      id: "zones-fill",
-      type: "fill",
-      paint: {
-        "fill-color": choroplethOn ? fillColorExpression() : "#c7c9d1",
-        // Selected zone gains emphasis (higher opacity) on top of the base value.
-        "fill-opacity": [
-          "case",
-          ["boolean", ["feature-state", "selected"], false],
-          choroplethOn ? 0.75 : 0.5,
-          choroplethOn ? 0.55 : 0.22,
-        ],
-        "fill-outline-color": choroplethOn ? "transparent" : "rgba(10,10,10,0.18)",
-      },
-    }),
-    [choroplethOn]
-  );
+/**
+ * Quantile fill expression over the CURRENT displayed totals: 6 equal-count
+ * buckets → 5 breaks; null total → #f5f5f5; degenerate (all-equal) domains fall
+ * through to the top tone; off/none → null (layers panel falls back to neutral).
+ */
+const fillExpr = useMemo<ExpressionSpecification | null>(() => {
+  if (!choroplethOn || !displayScores) return null;
+  const totals = displayScores.features
+    .map((f) => f.properties?.total)
+    .filter((v): v is number => typeof v === "number");
+  const breaks = quantileBreaks(totals, FILL.length);
+  const expr: unknown[] = ["case", ["==", ["get", "total"], null], "#f5f5f5"];
+  breaks.forEach((b, i) => expr.push(["<", ["get", "total"], b], FILL[i]));
+  expr.push(FILL[FILL.length - 1]);
+  return expr as unknown as ExpressionSpecification;
+}, [displayScores, choroplethOn]);
+
+const zonesFill: LayerProps = useMemo(
+  () => ({
+    id: "zones-fill",
+    type: "fill",
+    paint: {
+      "fill-color": choroplethOn ? fillExpr ?? "#c7c9d1" : "#c7c9d1",
+      // Selected zone gains emphasis (higher opacity) on top of the base value.
+      "fill-opacity": [
+        "case",
+        ["boolean", ["feature-state", "selected"], false],
+        choroplethOn ? 0.75 : 0.5,
+        choroplethOn ? 0.55 : 0.22,
+      ],
+      "fill-outline-color": choroplethOn ? "transparent" : "rgba(10,10,10,0.18)",
+    },
+  }),
+  [choroplethOn, fillExpr]
+);
 
   const zonesLine: LayerProps = useMemo(
     () => ({
@@ -238,8 +240,8 @@ export function MapView({
         style={{ width: "100%", height: "100%" }}
       >
         <NavigationControl position="bottom-right" />
-        {scores && (
-          <Source id="zones" type="geojson" data={scores} generateId>
+        {displayScores && (
+          <Source id="zones" type="geojson" data={displayScores} generateId>
             <Layer {...zonesFill} />
             <Layer {...zonesLine} />
           </Source>

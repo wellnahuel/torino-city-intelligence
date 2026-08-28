@@ -228,7 +228,7 @@ export function MapApp() {
       {/* Map wrapper — all absolute overlays live here, anchored to the map area */}
       <div className="relative min-w-0 flex-1">
         <MapView
-          scores={displayScores}
+          displayScores={displayScores}
           layerData={layerData}
           active={active}
           choroplethOn={choroplethOn}
