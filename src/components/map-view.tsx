@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTheme } from "next-themes";
 import { useTranslations } from "next-intl";
 import {
@@ -17,6 +17,8 @@ import type { ExpressionSpecification, StyleSpecification } from "maplibre-gl";
 import type { FeatureCollection, MultiPolygon, Polygon } from "geojson";
 import "maplibre-gl/dist/maplibre-gl.css";
 import type { LayerKey, MapSelection, Zone } from "@/types/data";
+import { zoneFeatureId } from "@/lib/zone-list";
+import { geometryBounds, geometryCentroid } from "@/lib/geometry";
 
 maplibregl.setWorkerUrl("/maplibre/maplibre-gl-worker.mjs");
 
@@ -59,7 +61,7 @@ interface MapViewProps {
   layerData: Partial<Record<LayerKey, FeatureCollection>>;
   active: Set<LayerKey>;
   choroplethOn: boolean;
-  /** Selection contract — highlight/fly are derived from this in the T12 refactor. */
+  /** Selection contract — highlight and fly are derived from this prop. */
   selected: MapSelection;
   onZoneSelect: (zone: Zone | null) => void;
   onBasemapError: (failed: boolean) => void;
@@ -70,6 +72,7 @@ export function MapView({
   layerData,
   active,
   choroplethOn,
+  selected,
   onZoneSelect,
   onBasemapError,
 }: MapViewProps) {
@@ -79,26 +82,67 @@ export function MapView({
 
   const mapRef = useRef<MapRef>(null);
   const loadedRef = useRef(false);
+  /** Currently highlighted feature id — written ONLY by the prop-driven effect below. */
   const selectedIdRef = useRef<number | null>(null);
   const [basemapError, setBasemapError] = useState(false);
   const [mapKey, setMapKey] = useState(0);
+  const [mapReady, setMapReady] = useState(false);
 
   const mapStyle = useMemo(() => {
     if (basemapError) return isDark ? FALLBACK_STYLE_DARK : FALLBACK_STYLE_LIGHT;
     return isDark ? STYLE_DARK : STYLE_LIGHT;
   }, [basemapError, isDark]);
 
-  const selectFeature = useCallback((id: number | null) => {
+  // Highlight + fly are DERIVED from the `selected` prop — the map's feature-state
+  // is synced here instead of in the click handler (single source of truth).
+  // `mapKey`/`mapReady` re-run the effect so a pending selection re-applies after
+  // a basemap retry remounts the <Map> or the initial load completes.
+  useEffect(() => {
     const map = mapRef.current?.getMap();
     if (!map) return;
-    if (selectedIdRef.current !== null) {
-      map.removeFeatureState({ source: "zones", id: selectedIdRef.current });
-    }
-    selectedIdRef.current = id;
-    if (id !== null) {
+    try {
+      if (selectedIdRef.current !== null) {
+        map.removeFeatureState({ source: "zones", id: selectedIdRef.current });
+        selectedIdRef.current = null;
+      }
+      const { zone } = selected;
+      if (!zone || !scores) return;
+      const id = zoneFeatureId(zone, scores);
+      if (id < 0) return;
       map.setFeatureState({ source: "zones", id }, { selected: true });
+      selectedIdRef.current = id;
+      // Only list-originated selections fly; map clicks highlight in place.
+      if (selected.source === "list" && loadedRef.current) {
+        const bounds = geometryBounds(zone.geometry) as [[number, number], [number, number]];
+        const degenerate =
+          !Number.isFinite(bounds[0][0]) ||
+          !Number.isFinite(bounds[0][1]) ||
+          !Number.isFinite(bounds[1][0]) ||
+          !Number.isFinite(bounds[1][1]) ||
+          (bounds[0][0] === bounds[1][0] && bounds[0][1] === bounds[1][1]);
+        if (degenerate) {
+          map.flyTo({
+            center: geometryCentroid(zone.geometry) as [number, number],
+            zoom: 13,
+            duration: 700,
+          });
+        } else {
+          // Clear the sidebar (340px) + ScorePanel (340px) on lg; the bottom
+          // sheet on mobile.
+          const lg = window.matchMedia("(min-width: 1024px)").matches;
+          map.fitBounds(bounds, {
+            padding: lg
+              ? { left: 340, right: 360, top: 60, bottom: 60 }
+              : { left: 40, right: 40, top: 60, bottom: 140 },
+            maxZoom: 14.5,
+            duration: 700,
+          });
+        }
+      }
+    } catch {
+      // Map/source not ready (e.g. basemap error) — highlight + fly are best-effort.
     }
-  }, []);
+  }, [selected, scores, mapKey, mapReady]);
 
   const handleClick = useCallback(
     (e: MapLayerMouseEvent) => {
@@ -112,18 +156,17 @@ export function MapView({
           geometry: feature.geometry as Polygon | MultiPolygon,
           properties: feature.properties as unknown as Zone["properties"],
         };
-        selectFeature(numericId);
-        onZoneSelect(zone);
+        onZoneSelect(zone); // the effect above owns highlight — no selectFeature call
       } else {
-        selectFeature(null);
         onZoneSelect(null);
       }
     },
-    [onZoneSelect, selectFeature]
+    [onZoneSelect]
   );
 
   const handleLoad = useCallback(() => {
     loadedRef.current = true;
+    setMapReady(true);
     setBasemapError(false);
     onBasemapError(false);
   }, [onBasemapError]);
@@ -139,6 +182,7 @@ export function MapView({
     setBasemapError(false);
     setMapKey((k) => k + 1);
     loadedRef.current = false;
+    setMapReady(false);
   }, []);
 
   const zonesFill: LayerProps = useMemo(
@@ -147,7 +191,13 @@ export function MapView({
       type: "fill",
       paint: {
         "fill-color": choroplethOn ? fillColorExpression() : "#c7c9d1",
-        "fill-opacity": choroplethOn ? 0.55 : 0.22,
+        // Selected zone gains emphasis (higher opacity) on top of the base value.
+        "fill-opacity": [
+          "case",
+          ["boolean", ["feature-state", "selected"], false],
+          choroplethOn ? 0.75 : 0.5,
+          choroplethOn ? 0.55 : 0.22,
+        ],
         "fill-outline-color": choroplethOn ? "transparent" : "rgba(10,10,10,0.18)",
       },
     }),
