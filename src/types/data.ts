@@ -29,6 +29,9 @@ export const FACTOR_KEYS: FactorKey[] = [
   "flow",
 ];
 
+/** Metric keys of the comparison table — total, the 5 factors, and rank (7 values). */
+export type CompareMetricKey = "total" | FactorKey | "rank";
+
 /** Properties of scores.geojson features (design data contract + additive fields). */
 export interface ZoneScoreProperties {
   ZONASTAT: string;
