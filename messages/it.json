@@ -86,5 +86,40 @@
     "title": "Pagina non trovata",
     "description": "La pagina che stai cercando non esiste o è stata spostata.",
     "backHome": "Torna alla home"
+  },
+  "ZoneList": {
+    "title": "Zone",
+    "searchPlaceholder": "Cerca zone…",
+    "searchLabel": "Cerca zone",
+    "count": "{count} zone",
+    "rank": "#",
+    "name": "Zona",
+    "score": "Punteggio",
+    "columns": {
+      "cafe": "Caffè",
+      "traffic": "Traffico",
+      "transit": "Trasporto",
+      "population": "Abit.",
+      "flow": "Flusso"
+    },
+    "units": {
+      "population": "residenti",
+      "perKm2": "/km²",
+      "stops": "fermate"
+    },
+    "sort": {
+      "best": "Migliori prima",
+      "asc": "Asc",
+      "desc": "Desc"
+    },
+    "noResults": "Nessuna zona corrisponde a «{query}»",
+    "openList": "Apri elenco zone",
+    "closeList": "Chiudi elenco zone",
+    "drawerOpen": "Elenco zone",
+    "drawerClose": "Chiudi elenco zone",
+    "aria": {
+      "sortMode": "Modalità di ordinamento",
+      "rowSelected": "selezionata"
+    }
   }
 }

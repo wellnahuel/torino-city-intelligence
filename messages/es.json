@@ -86,5 +86,40 @@
     "title": "Página no encontrada",
     "description": "La página que buscás no existe o fue movida.",
     "backHome": "Volver al inicio"
+  },
+  "ZoneList": {
+    "title": "Zonas",
+    "searchPlaceholder": "Buscar zonas…",
+    "searchLabel": "Buscar zonas",
+    "count": "{count} zonas",
+    "rank": "#",
+    "name": "Zona",
+    "score": "Puntaje",
+    "columns": {
+      "cafe": "Café",
+      "traffic": "Tráfico",
+      "transit": "Transporte",
+      "population": "Pobl.",
+      "flow": "Flujo"
+    },
+    "units": {
+      "population": "residentes",
+      "perKm2": "/km²",
+      "stops": "paradas"
+    },
+    "sort": {
+      "best": "Mejor primero",
+      "asc": "Asc",
+      "desc": "Desc"
+    },
+    "noResults": "Ninguna zona coincide con «{query}»",
+    "openList": "Abrir lista de zonas",
+    "closeList": "Cerrar lista de zonas",
+    "drawerOpen": "Lista de zonas",
+    "drawerClose": "Cerrar lista de zonas",
+    "aria": {
+      "sortMode": "Modo de orden",
+      "rowSelected": "seleccionada"
+    }
   }
 }
