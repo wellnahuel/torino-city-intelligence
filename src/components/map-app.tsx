@@ -35,6 +35,7 @@ const SCORE_BUCKET_COLORS = ["#dce5ff", "#b9c7ff", "#8ea4ff", "#4d6bff", "#001af
 export function MapApp() {
   const t = useTranslations("Map");
   const tz = useTranslations("ZoneList");
+  const tS = useTranslations("Scoring");
 
   const [counts, setCounts] = useState<LayerCounts | null>(null);
   const [scores, setScores] = useState<FeatureCollection<
@@ -46,6 +47,8 @@ export function MapApp() {
   const [choroplethOn, setChoroplethOn] = useState(true);
   /** Custom scoring weights — slider positions 0-100 per factor (DEFAULT_POSITIONS = official view). */
   const [weights, setWeights] = useState<ScoringWeights>(DEFAULT_POSITIONS);
+  /** Weights accordion — collapsed by default (zero visual delta on load). */
+  const [weightsOpen, setWeightsOpen] = useState(false);
   const [selection, setSelection] = useState<MapSelection>(NULL_SELECTION);
   /** Mobile overlay drawer — closed by default on fresh load. */
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -181,6 +184,11 @@ export function MapApp() {
     setSidebarCollapsed(true);
   }, []);
 
+  /** One slider changed → replace that factor's position (never mutates state). */
+  const handleWeightChange = useCallback((key: FactorKey, v: number) => {
+    setWeights((w) => ({ ...w, [key]: v }));
+  }, []);
+
   // Escape closes the mobile drawer and returns focus to the floating toggle.
   useEffect(() => {
     if (!drawerOpen) return;
@@ -238,7 +246,7 @@ export function MapApp() {
         />
 
         {/* Layers panel */}
-        <div className="absolute left-3 top-14 z-20 w-56 rounded-xl border border-border bg-card/90 p-3 shadow-lg backdrop-blur lg:top-3">
+        <div className="absolute left-3 top-14 z-20 w-64 max-h-[calc(100dvh-3.5rem)] overflow-y-auto rounded-xl border border-border bg-card/90 p-3 shadow-lg backdrop-blur lg:top-3">
           <div className="mb-2 flex items-center justify-between">
             <h2 className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
               {t("layersTitle")}
@@ -273,6 +281,83 @@ export function MapApp() {
             </button>
           </div>
 
+          {/* Custom weights accordion — below the choropleth toggle, collapsed by default */}
+          <div className="mt-2 border-t border-border pt-2">
+            <button
+              type="button"
+              aria-expanded={weightsOpen}
+              onClick={() => setWeightsOpen((o) => !o)}
+              className="flex w-full items-center justify-between gap-2 rounded-md border border-border bg-card px-3 py-1.5 text-xs text-foreground hover:border-accent/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            >
+              <span className="flex items-center gap-1.5">
+                <span>{tS("weightsTitle")}</span>
+                {isCustom && (
+                  <span className="rounded-full bg-accent/10 px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-wider text-accent">
+                    {tS("customBadge")}
+                  </span>
+                )}
+              </span>
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+                className={`transition-transform ${weightsOpen ? "rotate-180" : ""}`}
+              >
+                <path d="M6 9l6 6 6-6" />
+              </svg>
+            </button>
+
+            {weightsOpen && (
+              <div className="mt-1.5 flex flex-col gap-2">
+                <p className="font-mono text-[9px] text-muted-foreground">
+                  {tS("weightsIntro")}
+                </p>
+                {FACTOR_KEYS.map((k) => (
+                  <div key={k}>
+                    <div className="flex items-center justify-between">
+                      <label htmlFor={`weight-${k}`} className="text-[10px] text-foreground">
+                        {tS(`variable.${k}.name`)}
+                        {k === "cafe" && (
+                          <span className="text-muted-foreground">{tS("inverseMark")}</span>
+                        )}
+                      </label>
+                      <span className="w-9 text-right font-mono text-[10px] tabular-nums text-accent">
+                        {weights[k]}%
+                      </span>
+                    </div>
+                    <input
+                      id={`weight-${k}`}
+                      type="range"
+                      min={0}
+                      max={100}
+                      step={1}
+                      value={weights[k]}
+                      onChange={(e) => handleWeightChange(k, Number(e.target.value))}
+                      className="mt-0.5 w-full cursor-pointer accent-[#001aff]"
+                    />
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => setWeights(DEFAULT_POSITIONS)}
+                  disabled={!isCustom}
+                  className="rounded-md border border-border bg-card px-2 py-1 text-[10px] text-muted-foreground hover:border-accent/60 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  {tS("weightsReset")}
+                </button>
+                <p className="font-mono text-[9px] text-muted-foreground">
+                  {tS("normalizedNote")}
+                </p>
+              </div>
+            )}
+          </div>
+
           {dataError && <p className="mt-2 text-[10px] text-red-500">{dataError}</p>}
           {loading && (
             <p className="mt-2 font-mono text-[10px] text-muted-foreground">{t("loading")}</p>
@@ -282,7 +367,7 @@ export function MapApp() {
         {choroplethOn && (
           <div className="absolute bottom-3 left-3 z-20 hidden rounded-xl border border-border bg-card/90 px-3 py-2 shadow-lg backdrop-blur sm:block">
             <p className="mb-1 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
-              {t("legend.title")}
+              {t(isCustom ? "legend.titleCustom" : "legend.title")}
             </p>
             <div className="flex items-center gap-2">
               <span className="font-mono text-[10px] text-muted-foreground">{t("legend.low")}</span>

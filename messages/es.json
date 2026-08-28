@@ -26,6 +26,7 @@
     },
     "legend": {
       "title": "Potencial de café",
+      "titleCustom": "Potencial personalizado",
       "low": "Bajo",
       "high": "Alto"
     },
@@ -47,6 +48,12 @@
     "infoLabel": "Información sobre este factor",
     "weightLabel": "Peso:",
     "totalNote": "Total = suma de los aportes, escala de 0 a 100.",
+    "weightsTitle": "Personalizar pesos",
+    "weightsIntro": "Arrastrá los controles para re-ponderar los cinco factores. Los valores se renormalizan para sumar 100%.",
+    "weightsReset": "Restablecer",
+    "customBadge": "Personalizado",
+    "normalizedNote": "Los pesos se renormalizan para sumar 100% — las posiciones se rebalancean automáticamente.",
+    "customTotal": "Puntaje total (personalizado)",
     "variable": {
       "cafe": {
         "name": "Competencia de cafés",

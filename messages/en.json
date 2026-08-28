@@ -26,6 +26,7 @@
     },
     "legend": {
       "title": "Café potential",
+      "titleCustom": "Custom potential",
       "low": "Low",
       "high": "High"
     },
@@ -47,6 +48,12 @@
     "infoLabel": "About this factor",
     "weightLabel": "Weight:",
     "totalNote": "Total = sum of contributions, 0-100 scale.",
+    "weightsTitle": "Customize weights",
+    "weightsIntro": "Drag the sliders to re-weight the five factors. Values are renormalized to sum 100%.",
+    "weightsReset": "Reset",
+    "customBadge": "Custom",
+    "normalizedNote": "Weights renormalize to sum 100% — positions are rebalanced automatically.",
+    "customTotal": "Total score (custom)",
     "variable": {
       "cafe": {
         "name": "Café competition",
