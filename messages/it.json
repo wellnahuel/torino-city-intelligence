@@ -54,6 +54,8 @@
     "customBadge": "Personalizzato",
     "normalizedNote": "I pesi vengono rinormalizzati per sommare al 100% — le posizioni vengono ribilanciate automaticamente.",
     "customTotal": "Punteggio totale (personalizzato)",
+    "aboveAverage": "+{value} vs media della città",
+    "belowAverage": "−{value} vs media della città",
     "variable": {
       "cafe": {
         "name": "Concorrenza caffè",

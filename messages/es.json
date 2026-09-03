@@ -54,6 +54,8 @@
     "customBadge": "Personalizado",
     "normalizedNote": "Los pesos se renormalizan para sumar 100% — las posiciones se rebalancean automáticamente.",
     "customTotal": "Puntaje total (personalizado)",
+    "aboveAverage": "+{value} vs promedio de la ciudad",
+    "belowAverage": "−{value} vs promedio de la ciudad",
     "variable": {
       "cafe": {
         "name": "Competencia de cafés",

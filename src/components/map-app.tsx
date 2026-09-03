@@ -100,6 +100,16 @@ export function MapApp() {
     [scores, weights]
   );
 
+  /** City-wide mean total under CURRENT weights — prop into ScorePanel (keeps it pure). */
+  const cityAverage = useMemo(() => {
+    if (!displayScores) return null;
+    const totals = displayScores.features
+      .map((f) => f.properties?.total)
+      .filter((v): v is number => typeof v === "number" && Number.isFinite(v));
+    if (totals.length === 0) return null;
+    return totals.reduce((s, v) => s + v, 0) / totals.length;
+  }, [displayScores]);
+
   // READ persisted weights ONCE after mount (SSR-safe — effects never run server-side).
   useEffect(() => {
     try {
@@ -505,6 +515,7 @@ export function MapApp() {
               zone={selection.zone}
               allLayersOff={active.size === 0}
               weights={weights}
+              cityAverage={cityAverage}
               inCompare={
                 selection.zone ? compareCodes.has(selection.zone.properties.ZONASTAT) : false
               }

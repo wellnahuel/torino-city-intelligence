@@ -54,6 +54,8 @@
     "customBadge": "Custom",
     "normalizedNote": "Weights renormalize to sum 100% — positions are rebalanced automatically.",
     "customTotal": "Total score (custom)",
+    "aboveAverage": "+{value} vs city average",
+    "belowAverage": "−{value} vs city average",
     "variable": {
       "cafe": {
         "name": "Café competition",

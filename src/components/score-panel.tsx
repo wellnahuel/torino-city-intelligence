@@ -24,6 +24,8 @@ interface ScorePanelProps {
   zone: Zone | null;
   allLayersOff: boolean;
   weights: ScoringWeights;
+  /** City-wide mean total under the SAME weights — for the "vs average" line. */
+  cityAverage: number | null;
   /** Selected zone is currently in the comparison set (pin active). */
   inCompare: boolean;
   /** Compare set is at the 3-zone cap — add disabled. */
@@ -35,6 +37,7 @@ export function ScorePanel({
   zone,
   allLayersOff,
   weights,
+  cityAverage,
   inCompare,
   compareFull,
   onToggleCompare,
@@ -93,6 +96,15 @@ export function ScorePanel({
   const total = useMemo(
     () => (zone ? computeZoneScore(zone.properties, normW) : null),
     [zone, normW]
+  );
+
+  /** Zone total vs city average, rounded to 1 decimal — null when either is unknown. */
+  const diff = useMemo(
+    () =>
+      total !== null && cityAverage !== null
+        ? Math.round((total - cityAverage) * 10) / 10
+        : null,
+    [total, cityAverage]
   );
 
   return (
@@ -158,6 +170,17 @@ export function ScorePanel({
               {total === null ? "–" : Math.round(total * 10) / 10}
             </span>
           </div>
+          {diff !== null && (
+            <p
+              className={`mt-1 text-right font-mono text-[10px] tabular-nums ${
+                diff >= 0 ? "text-emerald-500" : "text-red-500"
+              }`}
+            >
+              {diff >= 0
+                ? t("aboveAverage", { value: diff.toFixed(1) })
+                : t("belowAverage", { value: Math.abs(diff).toFixed(1) })}
+            </p>
+          )}
 
           <table className="w-full text-xs">
             <thead>
