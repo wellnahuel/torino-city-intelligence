@@ -122,6 +122,12 @@ bun run lint       # eslint
 
 `next.config.ts` sets `output: "export"` — the app builds to a fully static site. **Do not run `next build` locally for gating** (static export output); use the typecheck + lint + test gates above.
 
+## CI
+
+[![CI](https://github.com/wellnahuel/torino-city-intelligence/actions/workflows/ci.yml/badge.svg)](https://github.com/wellnahuel/torino-city-intelligence/actions/workflows/ci.yml)
+
+Quality gate on push/PR to `main` — typecheck (`tsc --noEmit`), lint (`eslint src`), and the test suite (`bun test`). No `next build`: Vercel runs the production build on deploy.
+
 ## Deployment (Vercel Hobby)
 
 1. Import the repo at <https://vercel.com> (Hobby = free, non-commercial — fine for a personal portfolio).
