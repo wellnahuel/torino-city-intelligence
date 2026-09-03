@@ -72,3 +72,8 @@ body {
   background: var(--card);
   color: var(--foreground);
 }
+
+/* Keep the zoom/navigation controls above the score panel (z-30). */
+.maplibregl-ctrl-bottom-right {
+  z-index: 40;
+}
