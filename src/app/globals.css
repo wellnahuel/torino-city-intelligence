@@ -73,7 +73,9 @@ body {
   color: var(--foreground);
 }
 
-/* Keep the zoom/navigation controls above the score panel (z-30). */
+/* Keep the zoom/navigation controls above the score panel (z-30).
+   !important needed: maplibre-gl.css sets z-index:2 on these containers
+   and its stylesheet wins over ours (same specificity, later load). */
 .maplibregl-ctrl-bottom-right {
-  z-index: 40;
+  z-index: 40 !important;
 }
