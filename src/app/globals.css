@@ -58,8 +58,9 @@ body {
 .maplibregl-popup-content {
   background: var(--card);
   color: var(--foreground);
-  border-radius: 0.5rem;
-  box-shadow: 0 4px 16px rgb(0 0 0 / 0.12);
+  border-radius: 0.75rem;
+  box-shadow: 0 8px 28px rgb(0 0 0 / 0.25);
+  border: 1px solid var(--border);
 }
 
 .maplibregl-popup-tip {

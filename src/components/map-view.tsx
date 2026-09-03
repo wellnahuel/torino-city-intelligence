@@ -463,13 +463,17 @@ const zonesFill: LayerProps = useMemo(
             offset={10}
             closeButton={false}
             closeOnClick={false}
-            className="rounded-xl border border-border shadow-xl"
+            className="rounded-xl border-2 border-border shadow-2xl"
           >
-            <div className="px-2 py-1.5 text-xs">
-              <p className="font-medium leading-snug text-foreground">{hover.name}</p>
-              <p className="mt-0.5 font-mono text-[10px] tabular-nums text-muted-foreground">
-                {tS("total")}{" "}
-                <span className="font-semibold text-accent">{hover.score.toFixed(1)}</span>
+            <div className="px-3 py-2">
+              <p className="text-sm font-semibold leading-snug text-foreground">
+                {hover.name}
+              </p>
+              <p className="mt-1 flex items-baseline gap-1.5 font-mono tabular-nums">
+                <span className="text-xs text-muted-foreground">{tS("total")}</span>
+                <span className="text-base font-bold leading-none text-accent">
+                  {hover.score.toFixed(1)}
+                </span>
               </p>
             </div>
           </Popup>
