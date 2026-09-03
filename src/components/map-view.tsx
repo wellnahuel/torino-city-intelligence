@@ -5,6 +5,7 @@ import { useTheme } from "next-themes";
 import { useTranslations } from "next-intl";
 import {
   Map,
+  Popup,
   Source,
   Layer,
   NavigationControl,
@@ -18,7 +19,12 @@ import type { FeatureCollection, MultiPolygon, Polygon } from "geojson";
 import "maplibre-gl/dist/maplibre-gl.css";
 import type { LayerKey, MapSelection, Zone } from "@/types/data";
 import { zoneFeatureId } from "@/lib/zone-list";
-import { quantileBreaks } from "@/lib/scoring";
+import {
+  computeZoneScore,
+  normalizeWeights,
+  quantileBreaks,
+  type ScoringWeights,
+} from "@/lib/scoring";
 import { geometryBounds, geometryCentroid } from "@/lib/geometry";
 
 maplibregl.setWorkerUrl("/maplibre/maplibre-gl-worker.mjs");
@@ -61,6 +67,8 @@ interface MapViewProps {
   selected: MapSelection;
   /** Session comparison set — each zone gets a `compare1..3` feature-state slot. */
   compare: Zone[];
+  /** Custom weights — the hover tooltip score is live-computed from these. */
+  weights: ScoringWeights;
   onZoneSelect: (zone: Zone | null) => void;
   onBasemapError: (failed: boolean) => void;
 }
@@ -72,10 +80,12 @@ export function MapView({
   choroplethOn,
   selected,
   compare,
+  weights,
   onZoneSelect,
   onBasemapError,
 }: MapViewProps) {
   const t = useTranslations("Map");
+  const tS = useTranslations("Scoring");
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme === "dark";
 
@@ -88,6 +98,28 @@ export function MapView({
   const [basemapError, setBasemapError] = useState(false);
   const [mapKey, setMapKey] = useState(0);
   const [mapReady, setMapReady] = useState(false);
+
+  /** Hover tooltip — zone + live-computed score anchored to the cursor. */
+  const [hover, setHover] = useState<{
+    id: number;
+    name: string;
+    score: number;
+    lng: number;
+    lat: number;
+  } | null>(null);
+  /** Pending hide — a short delay avoids flicker on thin gaps between zones. */
+  const hoverHideRef = useRef<number | null>(null);
+
+  /** Normalized weights — the tooltip score is recomputed live, never read
+   * from properties.total (stale under custom weights). */
+  const normW = useMemo(() => normalizeWeights(weights), [weights]);
+
+  // Clear any pending tooltip hide on unmount.
+  useEffect(() => {
+    return () => {
+      if (hoverHideRef.current !== null) window.clearTimeout(hoverHideRef.current);
+    };
+  }, []);
 
   const mapStyle = useMemo(() => {
     if (basemapError) return isDark ? FALLBACK_STYLE_DARK : FALLBACK_STYLE_LIGHT;
@@ -197,6 +229,60 @@ export function MapView({
     },
     [onZoneSelect]
   );
+
+  const cancelHoverHide = useCallback(() => {
+    if (hoverHideRef.current !== null) {
+      window.clearTimeout(hoverHideRef.current);
+      hoverHideRef.current = null;
+    }
+  }, []);
+
+  const scheduleHoverHide = useCallback(
+    (delay = 150) => {
+      cancelHoverHide();
+      hoverHideRef.current = window.setTimeout(() => {
+        setHover(null);
+        hoverHideRef.current = null;
+      }, delay);
+    },
+    [cancelHoverHide]
+  );
+
+  /**
+   * Hover tooltip — fires only on map hover. The legend/layers panel and the
+   * score panel are HTML overlays OUTSIDE the map container, so hovering them
+   * never reaches these events. The score uses the SAME live computation as
+   * the choropleth (computeZoneScore with normalized weights).
+   */
+  const handleMouseMove = useCallback(
+    (e: MapLayerMouseEvent) => {
+      const feature = e.features?.[0];
+      const id = feature && typeof feature.id === "number" ? feature.id : undefined;
+      if (!feature || id === undefined || !feature.properties) {
+        scheduleHoverHide();
+        return;
+      }
+      const props = feature.properties as unknown as Zone["properties"];
+      setHover((prev) => {
+        // Same zone under the cursor — keep the entry anchor, skip re-render.
+        if (prev && prev.id === id) return prev;
+        return {
+          id,
+          name: props.name || props.ZONASTAT,
+          score: computeZoneScore(props, normW),
+          lng: e.lngLat.lng,
+          lat: e.lngLat.lat,
+        };
+      });
+      cancelHoverHide();
+    },
+    [normW, cancelHoverHide, scheduleHoverHide]
+  );
+
+  /** Leave zone (or the map) — hide after a short delay to avoid flicker. */
+  const handleMouseLeave = useCallback(() => {
+    scheduleHoverHide();
+  }, [scheduleHoverHide]);
 
   const handleLoad = useCallback(() => {
     loadedRef.current = true;
@@ -317,6 +403,8 @@ const zonesFill: LayerProps = useMemo(
         initialViewState={TORINO}
         interactiveLayerIds={["zones-fill"]}
         onClick={handleClick}
+        onMouseMove={handleMouseMove}
+        onMouseLeave={handleMouseLeave}
         onLoad={handleLoad}
         onError={handleError}
         attributionControl={false}
@@ -366,6 +454,26 @@ const zonesFill: LayerProps = useMemo(
             </Source>
           );
         })}
+
+        {hover && (
+          <Popup
+            longitude={hover.lng}
+            latitude={hover.lat}
+            anchor="bottom"
+            offset={10}
+            closeButton={false}
+            closeOnClick={false}
+            className="rounded-xl border border-border shadow-xl"
+          >
+            <div className="px-2 py-1.5 text-xs">
+              <p className="font-medium leading-snug text-foreground">{hover.name}</p>
+              <p className="mt-0.5 font-mono text-[10px] tabular-nums text-muted-foreground">
+                {tS("total")}{" "}
+                <span className="font-semibold text-accent">{hover.score.toFixed(1)}</span>
+              </p>
+            </div>
+          </Popup>
+        )}
       </Map>
 
       {basemapError && (

@@ -302,6 +302,7 @@ export function MapApp() {
           choroplethOn={choroplethOn}
           selected={selection}
           compare={compare}
+          weights={weights}
           onZoneSelect={handleZoneSelect}
           onBasemapError={setBasemapError}
         />
